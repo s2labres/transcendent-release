@@ -1,0 +1,6 @@
+/features/*
+/models/*
+/reports/*
+/timeseries_cred_conf/*
+.DS_Store
+

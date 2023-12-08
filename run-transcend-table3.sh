@@ -1,0 +1,11 @@
+python3 ce.py 	                                    \
+	--train drebin                                  \
+	--test marvin_half                              \
+	-k 10                                           \
+	-n -4                                           \
+	--pval-consider full-train                      \
+	-t constrained-search                           \
+	-c cred                                         \
+	--cs-max f1_k:0.95                              \
+	--cs-con kept_pos_perc:0.76,kept_neg_perc:0.76  \
+	--rs-samples 200
