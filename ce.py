@@ -217,7 +217,7 @@ def main():
             print_and_extend('[P-VALS] Threshold criteria: {}'.format(q))
             print_thresholds(p_val_binary_thresholds)
 
-            results = thresholding.test_with_rejection(
+            results, _ = thresholding.test_with_rejection(
                 binary_thresholds=p_val_binary_thresholds,
                 test_scores=p_val_test_dict,
                 groundtruth_labels=y_test,
@@ -232,7 +232,7 @@ def main():
             print_and_extend('[PROBS] Threshold criteria: {}'.format(q))
             print_thresholds(prob_binary_thresholds)
 
-            results = thresholding.test_with_rejection(
+            results, _ = thresholding.test_with_rejection(
                 binary_thresholds=prob_binary_thresholds,
                 test_scores=prob_test_scores,
                 groundtruth_labels=y_test,
@@ -246,7 +246,7 @@ def main():
         print_and_extend('[P-VALS] Threshold with random grid search')
         print_thresholds(p_val_found_thresholds)
 
-        results = thresholding.test_with_rejection(
+        results, _ = thresholding.test_with_rejection(
             binary_thresholds=p_val_found_thresholds,
             test_scores=p_val_test_dict,
             groundtruth_labels=y_test,
@@ -260,7 +260,7 @@ def main():
 
         prob_test_scores = {'cred': probas_test}
 
-        results = thresholding.test_with_rejection(
+        results, _ = thresholding.test_with_rejection(
             binary_thresholds=prob_found_thresholds,
             test_scores=prob_test_scores,
             groundtruth_labels=y_test,
