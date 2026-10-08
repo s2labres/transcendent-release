@@ -4,3 +4,16 @@
 /timeseries_cred_conf/*
 .DS_Store
 
+# Python & Virtual Environments
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+
+
