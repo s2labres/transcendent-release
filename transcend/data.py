@@ -137,11 +137,13 @@ def save_results(results, args, output='txt'):
     if args.criteria == 'quartiles':
         filename += '-{}'.format(args.q_consider)
     if args.criteria == 'constrained-search':
+        cs_con_val = getattr(args, 'cs_con', getattr(args, 'cs_min', ''))
         filename += '-{}max-{}con-{}s'.format(
-            args.cs_max, args.cs_min, args.rs_samples)
+            getattr(args, 'cs_max', ''), cs_con_val, getattr(args, 'rs_samples', ''))
     if args.criteria == 'random-search':
+        rs_ceil_val = getattr(args, 'rs_ceiling', getattr(args, 'rs_reject_limit', ''))
         filename += '-{}max-{}mwrej-{}s'.format(
-            args.rs_max, args.rs_reject_limit, args.rs_samples)
+            getattr(args, 'rs_max', ''), rs_ceil_val, getattr(args, 'rs_samples', ''))
     filename += '.' + output
 
     folder = './reports'

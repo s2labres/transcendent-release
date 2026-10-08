@@ -48,7 +48,25 @@ def get_single_svm_ncm(clf, single_x, single_y):
 
     """
     assert hasattr(clf, 'decision_function')
-    decision = clf.decision_function(single_x)
+    if hasattr(single_x, 'ndim') and single_x.ndim == 1:
+        x_2d = single_x.reshape(1, -1)
+    elif hasattr(single_x, 'shape') and len(single_x.shape) == 2:
+        x_2d = single_x
+    else:
+        x_arr = np.asarray(single_x)
+        x_2d = x_arr.reshape(1, -1) if x_arr.ndim == 1 else x_arr
+
+    if hasattr(clf, '_sparse'):
+        from scipy import sparse as sp
+        if clf._sparse and not sp.issparse(x_2d):
+            x_2d = sp.csr_matrix(x_2d)
+        elif not clf._sparse and sp.issparse(x_2d):
+            x_2d = x_2d.toarray()
+
+    decision = clf.decision_function(x_2d)
+    if hasattr(decision, '__len__'):
+        decision = decision[0]
+    decision = float(decision)
 
     # If y (ground truth in calibration, prediction in testing) is malware
     # then flip the sign to ensure the most conforming point is most minimal.

@@ -56,20 +56,19 @@ include a citation of the original Transcend Usenix paper as well:
 
 ### Installation
 
-Transcend requires Python 3 (preferably >= 3.5) as well as the statistical 
+Transcend requires Python 3 as well as the statistical
 learning stack of NumPy, SciPy, and Scikit-learn.
 
-Package dependencies can be installed by using the listing in requirements.txt.
+Dependencies are managed using `uv`:
 
 ```shell
-pip install -r requirements.txt
+uv sync
 ```
 
-A full installation can be peformed using setup.py:
+To run tests:
 
 ```shell
-pip install -r requirements.txt
-python setup.py install 
+uv run pytest
 ```
 
 Features to reproduce the Android experiments can be downloaded from [this link](https://www.dropbox.com/sh/8cc6z64rzi1n4br/AAD88BhcF_BjWcT7tO2T53qTa?dl=0)

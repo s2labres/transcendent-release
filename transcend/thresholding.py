@@ -860,28 +860,23 @@ def get_performance_with_rejection(y_true, y_pred, keep_mask, full=True):
     d = {}
 
     # change to real label
-    total_neg = len(y_true) - sum(y_true)
-    total_pos = sum(y_true)
-    # total_neg = len(y_pred) - sum(y_pred)
-    # total_pos = sum(y_pred)
+    total_neg = int(len(y_true) - sum(y_true))
+    total_pos = int(sum(y_true))
 
-    kept_total_perc = sum(keep_mask) / len(keep_mask)
-    reject_total_perc = sum(~keep_mask) / len(keep_mask)
+    kept_total_perc = float(sum(keep_mask) / len(keep_mask)) if len(keep_mask) > 0 else 0.0
+    reject_total_perc = float(sum(~keep_mask) / len(keep_mask)) if len(keep_mask) > 0 else 0.0
 
-    # change to real label
-    kept_neg = len(y_true[keep_mask]) - sum(y_true[keep_mask])
-    kept_pos = sum(y_true[keep_mask])
-    # kept_neg = len(y_pred[keep_mask]) - sum(y_pred[keep_mask])
-    # kept_pos = sum(y_pred[keep_mask])
+    kept_neg = int(len(y_true[keep_mask]) - sum(y_true[keep_mask]))
+    kept_pos = int(sum(y_true[keep_mask]))
 
     reject_neg = total_neg - kept_neg
     reject_pos = total_pos - kept_pos
 
-    kept_neg_perc = (kept_neg / total_neg)
-    kept_pos_perc = (kept_pos / total_pos)
+    kept_neg_perc = (kept_neg / total_neg) if total_neg > 0 else 0.0
+    kept_pos_perc = (kept_pos / total_pos) if total_pos > 0 else 0.0
 
-    reject_neg_perc = 1 - kept_neg_perc
-    reject_pos_perc = 1 - kept_pos_perc
+    reject_neg_perc = 1.0 - kept_neg_perc
+    reject_pos_perc = 1.0 - kept_pos_perc
 
     d.update({'total_neg': total_neg,
               'total_pos': total_pos,
@@ -894,59 +889,62 @@ def get_performance_with_rejection(y_true, y_pred, keep_mask, full=True):
               'reject_neg_perc': reject_neg_perc,
               'reject_pos_perc': reject_pos_perc})
 
-    f1_b = metrics.f1_score(y_true, y_pred)
-    f1_k = metrics.f1_score(y_true[keep_mask],
-                            y_pred[keep_mask])
-    f1_r = metrics.f1_score(y_true[~keep_mask],
-                            y_pred[~keep_mask])
+    def safe_score(metric_fn, yt, yp):
+        if len(yt) == 0:
+            return 0.0
+        try:
+            return float(metric_fn(yt, yp, zero_division=0.0))
+        except TypeError:
+            return float(metric_fn(yt, yp))
+        except Exception:
+            return 0.0
+
+    f1_b = safe_score(metrics.f1_score, y_true, y_pred)
+    f1_k = safe_score(metrics.f1_score, y_true[keep_mask], y_pred[keep_mask])
+    f1_r = safe_score(metrics.f1_score, y_true[~keep_mask], y_pred[~keep_mask])
 
     d.update({'f1_b': f1_b, 'f1_k': f1_k, 'f1_r': f1_r})
 
-    precision_b = metrics.precision_score(y_true, y_pred)
-
-    precision_k = metrics.precision_score(y_true[keep_mask],
-                                          y_pred[keep_mask])
-    precision_r = metrics.precision_score(y_true[~keep_mask],
-                                          y_pred[~keep_mask])
+    precision_b = safe_score(metrics.precision_score, y_true, y_pred)
+    precision_k = safe_score(metrics.precision_score, y_true[keep_mask], y_pred[keep_mask])
+    precision_r = safe_score(metrics.precision_score, y_true[~keep_mask], y_pred[~keep_mask])
     d.update({'precision_b': precision_b,
               'precision_k': precision_k,
               'precision_r': precision_r})
 
-    recall_b = metrics.recall_score(y_true, y_pred)
-
-    recall_k = metrics.recall_score(y_true[keep_mask],
-                                    y_pred[keep_mask])
-    recall_r = metrics.recall_score(y_true[~keep_mask],
-                                    y_pred[~keep_mask])
+    recall_b = safe_score(metrics.recall_score, y_true, y_pred)
+    recall_k = safe_score(metrics.recall_score, y_true[keep_mask], y_pred[keep_mask])
+    recall_r = safe_score(metrics.recall_score, y_true[~keep_mask], y_pred[~keep_mask])
     d.update({'recall_b': recall_b, 'recall_k': recall_k, 'recall_r': recall_r})
 
     if full:
-        cf_baseline = metrics.confusion_matrix(y_true, y_pred)
-
-        cf_keep = metrics.confusion_matrix(y_true[keep_mask],
-                                           y_pred[keep_mask])
-        cf_reject = metrics.confusion_matrix(y_true[~keep_mask],
-                                             y_pred[~keep_mask])
         try:
-            tn_b, fp_b, fn_b, tp_b = cf_baseline.ravel()
-            tn_k, fp_k, fn_k, tp_k = cf_keep.ravel()
-            tn_r, fp_r, fn_r, tp_r = cf_reject.ravel()
-        except:
+            if len(y_true) > 0 and len(y_true[keep_mask]) > 0 and len(y_true[~keep_mask]) > 0:
+                cf_baseline = metrics.confusion_matrix(y_true, y_pred)
+                cf_keep = metrics.confusion_matrix(y_true[keep_mask], y_pred[keep_mask])
+                cf_reject = metrics.confusion_matrix(y_true[~keep_mask], y_pred[~keep_mask])
+
+                tn_b, fp_b, fn_b, tp_b = cf_baseline.ravel()
+                tn_k, fp_k, fn_k, tp_k = cf_keep.ravel()
+                tn_r, fp_r, fn_r, tp_r = cf_reject.ravel()
+
+                d.update({
+                    'tn_b': tn_b, 'fp_b': fp_b, 'fn_b': fn_b, 'tp_b': tp_b,
+                    'tn_k': tn_k, 'fp_k': fp_k, 'fn_k': fn_k, 'tp_k': tp_k,
+                    'tn_r': tn_r, 'fp_r': fp_r, 'fn_r': fn_r, 'tp_r': tp_r
+                })
+
+                d['tpr_b'] = tp_b / (tp_b + fn_b) if (tp_b + fn_b) > 0 else 0.0
+                d['tpr_k'] = tp_k / (tp_k + fn_k) if (tp_k + fn_k) > 0 else 0.0
+                d['tpr_r'] = tp_r / (tp_r + fn_r) if (tp_r + fn_r) > 0 else 0.0
+
+                d['fpr_b'] = fp_b / (fp_b + tn_b) if (fp_b + tn_b) > 0 else 0.0
+                d['fpr_k'] = fp_k / (fp_k + tn_k) if (fp_k + tn_k) > 0 else 0.0
+                d['fpr_r'] = fp_r / (fp_r + tn_r) if (fp_r + tn_r) > 0 else 0.0
+            else:
+                return d
+        except Exception:
             return d
-
-        d.update({
-            'tn_b': tn_b, 'fp_b': fp_b, 'fn_b': fn_b, 'tp_b': tp_b,
-            'tn_k': tn_k, 'fp_k': fp_k, 'fn_k': fn_k, 'tp_k': tp_k,
-            'tn_r': tn_r, 'fp_r': fp_r, 'fn_r': fn_r, 'tp_r': tp_r
-        })
-
-        d['tpr_b'] = tp_b / (tp_b + fn_b)
-        d['tpr_k'] = tp_k / (tp_k + fn_k)
-        d['tpr_r'] = tp_r / (tp_r + fn_r)
-
-        d['fpr_b'] = fp_b / (fp_b + tn_b)
-        d['fpr_k'] = fp_k / (fp_k + tn_k)
-        d['fpr_r'] = fp_r / (fp_r + tn_r)
 
     return d
 
@@ -962,6 +960,8 @@ def report_results(d, quiet=False):
         str: A textual report of the results.
 
     """
+    if isinstance(d, tuple):
+        d = d[0]
     report_str = ''
 
     def print_and_extend(report_line):
